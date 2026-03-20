@@ -153,6 +153,17 @@
                   state $ or (:data states)
                     {} $ :active-hall nil
                   active-hall $ :active-hall state
+                  tracks $ :tracks slot
+                  track0 $ get tracks 0
+                  merged? $ and
+                    = 4 $ count tracks
+                    some? track0
+                    = (:title track0)
+                      :title $ get tracks 1
+                    = (:title track0)
+                      :title $ get tracks 2
+                    = (:title track0)
+                      :title $ get tracks 3
                 div
                   {} $ :class-name style-slot
                   div
@@ -160,11 +171,26 @@
                     span
                       {} $ :class-name style-time
                       <> $ :time slot
-                  div
-                    {} $ :class-name style-track-grid
-                    list-> ({})
-                      map-indexed (:tracks slot)
-                        fn (idx track)
+                  if merged?
+                    div
+                      {} $ :class-name style-track-grid
+                      div
+                        {} (:class-name style-track-card)
+                          :style $ if (= active-hall :all) style-track-active style-track-idle
+                          :on-click $ fn (e d!)
+                            if (= active-hall :all)
+                              d! cursor $ assoc state :active-hall nil
+                              d! cursor $ assoc state :active-hall :all
+                        div
+                          {} $ :class-name style-track-label
+                          <> "|全部会场"
+                        div
+                          {} $ :class-name style-track-title
+                          <> $ :title track0
+                    div
+                      {} $ :class-name style-track-grid
+                      list-> ({})
+                        map-indexed tracks $ fn (idx track)
                           [] (:hall track)
                             div
                               {} (:class-name style-track-card)
@@ -194,22 +220,22 @@
         |style-hero $ %{} :CodeEntry (:doc |) (:schema nil)
           :code $ quote
             defstyle style-hero $ {}
-              |& $ {} (:margin-bottom |24px) (:display :flex) (:flex-direction :column) (:gap |8px)
+              |& $ {} (:margin-bottom |14px) (:display :flex) (:flex-direction :column) (:gap |4px)
           :examples $ []
         |style-hero-note $ %{} :CodeEntry (:doc |) (:schema nil)
           :code $ quote
             defstyle style-hero-note $ {}
-              |& $ {} (:font-size |14px) (:color "|rgba(255,255,255,0.64)")
+              |& $ {} (:font-size |13px) (:color "|rgba(255,255,255,0.54)")
           :examples $ []
         |style-hero-title $ %{} :CodeEntry (:doc |) (:schema nil)
           :code $ quote
             defstyle style-hero-title $ {}
-              |& $ {} (:font-size |40px) (:font-weight |700) (:letter-spacing |1px)
+              |& $ {} (:font-size |32px) (:font-weight |700) (:letter-spacing |0.5px) (:color |#dff7ff)
           :examples $ []
         |style-page $ %{} :CodeEntry (:doc |) (:schema nil)
           :code $ quote
             defstyle style-page $ {}
-              |& $ {} (:min-height |100vh) (:padding |8px) (:background-color |#111315) (:color |white)
+              |& $ {} (:min-height |100vh) (:padding |8px) (:background-color |#171a1f) (:color |white)
           :examples $ []
         |style-period $ %{} :CodeEntry (:doc |) (:schema nil)
           :code $ quote
@@ -219,12 +245,12 @@
         |style-slot $ %{} :CodeEntry (:doc |) (:schema nil)
           :code $ quote
             defstyle style-slot $ {}
-              |& $ {} (:padding |12px) (:border-radius |12px) (:background-color "|rgba(255,255,255,0.03)") (:border "|1px solid rgba(255,255,255,0.08)")
+              |& $ {} (:padding |12px) (:border-radius |2px) (:background-color |#20242b) (:border |none) (:box-shadow |none)
           :examples $ []
         |style-slot-head $ %{} :CodeEntry (:doc |) (:schema nil)
           :code $ quote
             defstyle style-slot-head $ {}
-              |& $ {} (:display :flex) (:align-items :center) (:justify-content :space-between) (:margin-bottom |8px) (:gap |8px)
+              |& $ {} (:display :flex) (:align-items :center) (:justify-content :space-between) (:margin-bottom |8px) (:gap |8px) (:padding-bottom |6px) (:border-bottom "|1px solid rgba(255,255,255,0.06)")
           :examples $ []
         |style-slots $ %{} :CodeEntry (:doc |) (:schema nil)
           :code $ quote
@@ -234,17 +260,17 @@
         |style-time $ %{} :CodeEntry (:doc |) (:schema nil)
           :code $ quote
             defstyle style-time $ {}
-              |& $ {} (:font-size |20px) (:font-weight |700)
+              |& $ {} (:font-size |18px) (:font-weight |700) (:letter-spacing |0.3px) (:color |#f5f7fa)
           :examples $ []
         |style-track-active $ %{} :CodeEntry (:doc |) (:schema nil)
           :code $ quote
-            def style-track-active $ {} (:background-color "|rgba(79, 214, 255, 0.18)") (:border-color "|rgba(79, 214, 255, 0.7)")
+            def style-track-active $ {} (:background-color |#1496c9) (:color |white)
           :examples $ []
         |style-track-card $ %{} :CodeEntry (:doc |) (:schema nil)
           :code $ quote
             defstyle style-track-card $ {}
-              |& $ {} (:padding |10px) (:border-radius |10px) (:cursor :pointer) (:transition-duration |240ms) (:transition-property "|background-color, border-color, transform") (:border "|1px solid transparent")
-              |&:hover $ {} (:transform "|translateY(-1px)")
+              |& $ {} (:padding |10px) (:border-radius |2px) (:cursor :pointer) (:border |none) (:box-shadow |none)
+              |&:hover $ {} (:filter "|brightness(1.05)")
           :examples $ []
         |style-track-grid $ %{} :CodeEntry (:doc |) (:schema nil)
           :code $ quote
@@ -253,17 +279,17 @@
           :examples $ []
         |style-track-idle $ %{} :CodeEntry (:doc |) (:schema nil)
           :code $ quote
-            def style-track-idle $ {} (:background-color "|rgba(255,255,255,0.02)") (:border-color "|rgba(255,255,255,0.08)")
+            def style-track-idle $ {} (:background-color |#2b3038)
           :examples $ []
         |style-track-label $ %{} :CodeEntry (:doc |) (:schema nil)
           :code $ quote
             defstyle style-track-label $ {}
-              |& $ {} (:font-size |12px) (:font-weight |700) (:margin-bottom |6px) (:color "|rgba(255,255,255,0.7)")
+              |& $ {} (:font-size |12px) (:font-weight |700) (:margin-bottom |6px) (:color |#87dfff) (:text-transform |uppercase) (:letter-spacing |0.6px)
           :examples $ []
         |style-track-title $ %{} :CodeEntry (:doc |) (:schema nil)
           :code $ quote
             defstyle style-track-title $ {}
-              |& $ {} (:font-size |15px) (:line-height |1.5) (:font-weight |600)
+              |& $ {} (:font-size |14px) (:line-height |1.45) (:font-weight |600) (:color |#f2f4f7)
           :examples $ []
       :ns $ %{} :NsEntry (:doc |)
         :code $ quote
