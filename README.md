@@ -1,4 +1,6 @@
-## Respo workflow in Calcit-js
+
+Respo workflow in Calcit-js
+----
 
 > Respo web page based on [calcit-js](https://github.com/calcit-lang/calcit).
 
@@ -9,9 +11,9 @@ Demo https://repo.calcit-lang.org/respo-calcit-workflow/ .
 To develop:
 
 ```bash
-cr js -w
+cr js # watching
 
-yarn install --immutable
+yarn # to install vite
 yarn vite # watching and running on localhost:3000
 ```
 
