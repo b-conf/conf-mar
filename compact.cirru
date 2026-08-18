@@ -126,8 +126,8 @@
           :code $ quote
             defcomp comp-container (reel)
               let
-                  store $ :store reel
-                  states $ :states store
+                  store $ reel-schema/read-field reel :store
+                  states $ reel-schema/read-field store :states
                 div
                   {} $ :class-name (str-spaced css/preset css/global style-page)
                   div
@@ -149,28 +149,29 @@
           :code $ quote
             defcomp comp-slot (states slot)
               let
-                  cursor $ or (:cursor states) ([])
-                  state $ or (:data states)
+                  cursor $ or (reel-schema/read-field states :cursor) ([])
+                  state $ or (reel-schema/read-field states :data)
                     {} $ :active-hall nil
-                  active-hall $ :active-hall state
-                  tracks $ :tracks slot
+                  active-hall $ option:unwrap-or (get state :active-hall) nil
+                  tracks $ option:unwrap-or (get slot :tracks) []
                   track0 $ get tracks 0
+                  track1 $ get tracks 1
+                  track2 $ get tracks 2
+                  track3 $ get tracks 3
+                  track0-title $ option:unwrap-or (get track0 :title) |
                   merged? $ and
                     = 4 $ count tracks
                     some? track0
-                    = (:title track0)
-                      :title $ get tracks 1
-                    = (:title track0)
-                      :title $ get tracks 2
-                    = (:title track0)
-                      :title $ get tracks 3
+                    = track0-title $ option:unwrap-or (get track1 :title) |
+                    = track0-title $ option:unwrap-or (get track2 :title) |
+                    = track0-title $ option:unwrap-or (get track3 :title) |
                 div
                   {} $ :class-name style-slot
                   div
                     {} $ :class-name style-slot-head
                     span
                       {} $ :class-name style-time
-                      <> $ :time slot
+                      <> $ option:unwrap-or (get slot :time) |
                   if merged?
                     div
                       {} $ :class-name style-track-grid
@@ -186,28 +187,29 @@
                           <> "|全部会场"
                         div
                           {} $ :class-name style-track-title
-                          <> $ :title track0
+                          <> track0-title
                     div
                       {} $ :class-name style-track-grid
                       list-> ({})
                         map-indexed tracks $ fn (idx track)
-                          [] (:hall track)
+                          [] (option:unwrap-or (get track :hall) |)
                             div
                               {} (:class-name style-track-card)
                                 :style $ if
-                                  = active-hall $ :hall track
+                                  = active-hall $ option:unwrap-or (get track :hall) |
                                   , style-track-active style-track-idle
                                 :on-click $ fn (e d!)
                                   if
-                                    = active-hall $ :hall track
+                                    = active-hall $ option:unwrap-or (get track :hall) |
                                     d! cursor $ assoc state :active-hall nil
-                                    d! cursor $ assoc state :active-hall (:hall track)
+                                    d! cursor $ assoc state :active-hall
+                                      option:unwrap-or (get track :hall) |
                               div
                                 {} $ :class-name style-track-label
-                                <> $ :label track
+                                <> $ option:unwrap-or (get track :label) |
                               div
                                 {} $ :class-name style-track-title
-                                <> $ :title track
+                                <> $ option:unwrap-or (get track :title) |
           :examples $ []
         |period-label $ %{} :CodeEntry (:doc |) (:schema nil)
           :code $ quote
@@ -298,12 +300,13 @@
             respo.core :refer $ list-> defcomp defeffect <> >> div button textarea span input
             respo.comp.space :refer $ =<
             reel.comp.reel :refer $ comp-reel
+            reel.schema :as reel-schema
             app.config :refer $ dev?
     |app.config $ %{} :FileEntry
       :defs $ {}
         |dev? $ %{} :CodeEntry (:doc |) (:schema nil)
           :code $ quote
-            def dev? $ = "\"dev" (get-env "\"mode" "\"release")
+            def dev? $ = "\"dev" $ option:unwrap-or (get-env "\"mode") "\"release"
           :examples $ []
         |site $ %{} :CodeEntry (:doc |) (:schema nil)
           :code $ quote
@@ -325,7 +328,7 @@
                 js/console.log "\"Dispatch:" op
               reset! *reel $ reel-updater updater @*reel op
           :examples $ []
-        |main! $ %{} :CodeEntry (:doc |) (:schema nil)
+        |main! $ %{} :CodeEntry (:doc |)
           :code $ quote
             defn main! ()
               println "\"Running mode:" $ if config/dev? "\"dev" "\"release"
@@ -339,21 +342,30 @@
               flipped js/setInterval 60000 persist-storage!
               let
                   raw $ js/localStorage.getItem (:storage-key config/site)
-                when (some? raw)
-                  dispatch! $ :: :hydrate-storage (parse-cirru-edn raw)
+                when (js-present? raw)
+                  dispatch! $ :: :hydrate-storage
+                    parse-cirru-edn $ unsafe-coerce raw String
               println "|App started."
           :examples $ []
+          :schema $ :: 'Fn
+            {} (:return 'Dynamic)
+              :args $ []
+              :features $ #{} :js-ffi
         |mount-target $ %{} :CodeEntry (:doc |) (:schema nil)
           :code $ quote
             def mount-target $ js/document.querySelector |.app
           :examples $ []
-        |persist-storage! $ %{} :CodeEntry (:doc |) (:schema nil)
+        |persist-storage! $ %{} :CodeEntry (:doc |)
           :code $ quote
             defn persist-storage! ()
               println "\"Saved at" $ .!toISOString (new js/Date)
               js/localStorage.setItem (:storage-key config/site)
                 format-cirru-edn $ :store @*reel
           :examples $ []
+          :schema $ :: 'Fn
+            {} (:return 'Dynamic)
+              :args $ []
+              :features $ #{} :js-ffi
         |reload! $ %{} :CodeEntry (:doc |) (:schema nil)
           :code $ quote
             defn reload! () $ if (nil? build-errors)
